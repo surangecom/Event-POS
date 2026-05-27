@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Event POS — King/Ricely</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#f5f4f0;font-family:'Sarabun',system-ui,sans-serif}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+:root{
+  --bg:#f5f4f0;--card:#ffffff;--border:#e0ded8;--border2:#ccc9c1;
+  --text:#1a1917;--text2:#6b6860;--text3:#aaa89f;
+  --accent:#1a5c38;--accent-bg:#eaf3ec;--accent-text:#1a5c38;
+  --danger:#c0392b;--radius:12px;--radius-sm:8px;
+}
+.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg)}
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.tab{flex:1;padding:14px 0;font-size:14px;font-weight:500;text-align:center;cursor:pointer;border:none;background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:6px;transition:color 0.2s}
+.tab.active{color:var(--accent);border-bottom:2px solid var(--accent)}
+.tab svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.page{display:none;padding:16px}
+.page.active{display:block}
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.hdr-icon{width:42px;height:42px;border-radius:var(--radius-sm);background:var(--accent-bg);display:flex;align-items:center;justify-content:center}
+.hdr-icon svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hdr-title{font-size:16px;font-weight:600;color:var(--text)}
+.hdr-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.hdr-time{margin-left:auto;font-size:12px;color:var(--text3);text-align:right}
+.sec-lbl{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin:16px 0 8px}
+.input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);font-family:inherit;font-size:14px;color:var(--text);outline:none;transition:border 0.15s}
+.input:focus{border-color:var(--accent)}
+textarea.input{resize:none;min-height:64px}
+.prod-list{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.prod-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.prod-row:last-child{border-bottom:none}
+.prod-name{font-size:14px;font-weight:500;color:var(--text)}
+.prod-price-wrap{display:flex;align-items:center;gap:3px;margin-top:2px}
+.price-prefix{font-size:12px;color:var(--text3)}
+.price-input{width:62px;font-size:12px;border:none;border-bottom:1px solid var(--border2);background:transparent;color:var(--text2);font-family:inherit;padding:1px 3px;text-align:center;outline:none}
+.price-input:focus{border-bottom-color:var(--accent)}
+.qty-wrap{display:flex;align-items:center;gap:6px}
+.qty-btn{width:30px;height:30px;border:1px solid var(--border2);background:var(--bg);border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:background 0.1s}
+.qty-btn:active{background:var(--border)}
+.qty-val{width:24px;text-align:center;font-size:15px;font-weight:600;color:var(--text)}
+.row-amt{font-size:13px;font-weight:500;color:var(--text);min-width:52px;text-align:right}
+.sum-bar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-top:12px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:13px}
+.sum-row .lbl{color:var(--text2)}
+.sum-row .val{font-weight:500;color:var(--text)}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:6px;border-top:1px solid var(--border)}
+.total-lbl{font-size:15px;font-weight:600;color:var(--text)}
+.total-val{font-size:22px;font-weight:600;color:var(--accent)}
+.upload-lbl{display:block;border:1.5px dashed var(--border2);border-radius:var(--radius);padding:22px;text-align:center;cursor:pointer;background:var(--card);transition:background 0.15s}
+.upload-lbl:active{background:var(--bg)}
+.upload-lbl input{display:none}
+.upload-icon{margin:0 auto 8px;width:36px;height:36px;background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.upload-icon svg{width:18px;height:18px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.upload-text{font-size:13px;color:var(--text3)}
+.slip-preview{width:100%;border-radius:var(--radius-sm);margin-top:10px;max-height:180px;object-fit:cover;display:none}
+.btn-main{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;transition:opacity 0.15s}
+.btn-main:active{opacity:0.85}
+.btn-main:disabled{opacity:0.5;cursor:not-allowed}
+.btn-main svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.btn-ghost{width:100%;padding:11px;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius);font-family:inherit;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;transition:background 0.1s}
+.btn-ghost:active{background:var(--border)}
+.btn-ghost svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* sync status */
+.sync-bar{display:flex;align-items:center;gap:6px;font-size:12px;padding:8px 12px;border-radius:var(--radius-sm);margin-top:10px}
+.sync-bar.ok{background:#eaf3ec;color:#1a5c38}
+.sync-bar.err{background:#fdecea;color:#c0392b}
+.sync-bar.sending{background:#fef9ec;color:#8a6000}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1c1b19;color:#fff;padding:10px 22px;border-radius:24px;font-size:13px;font-family:inherit;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:999;white-space:nowrap}
+
+/* summary */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.stat-lbl{font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:500}
+.stat-val{font-size:21px;font-weight:600;color:var(--text)}
+.stat-val.accent{color:var(--accent)}
+.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tbl th{font-size:11px;font-weight:600;color:var(--text3);text-align:left;padding:10px 12px;background:var(--bg);border-bottom:1px solid var(--border);letter-spacing:0.04em}
+.tbl th:nth-child(2),.tbl td:nth-child(2){text-align:center}
+.tbl th:last-child,.tbl td:last-child{text-align:right}
+.tbl td{font-size:13px;color:var(--text);padding:10px 12px;border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tfoot td{font-weight:600;font-size:13px;background:var(--bg)}
+.ord-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px}
+.ord-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ord-tag{font-size:11px;font-weight:600;color:var(--accent-text);background:var(--accent-bg);padding:3px 9px;border-radius:6px}
+.ord-time{font-size:11px;color:var(--text3)}
+.ord-items{font-size:12px;color:var(--text2);margin-bottom:4px;line-height:1.5}
+.ord-total{font-size:14px;font-weight:600;color:var(--text)}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px}
+.sec-hdr-title{font-size:13px;font-weight:600;color:var(--text)}
+.badge{font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text2);padding:2px 10px;border-radius:10px}
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:14px}
+.empty svg{width:36px;height:36px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 10px}
+.btn-refresh{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);background:var(--accent-bg);border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;font-family:inherit;font-weight:500}
+.btn-refresh svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.loading-row{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('pos')" id="tab-pos">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      POS
+    </button>
+    <button class="tab" onclick="switchTab('summary')" id="tab-summary">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      สรุปวันนี้
+    </button>
+  </div>
+
+  <!-- POS PAGE -->
+  <div class="page active" id="page-pos">
+    <div class="hdr">
+      <div class="hdr-icon">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      </div>
+      <div>
+        <div class="hdr-title">Event POS</div>
+        <div class="hdr-sub">Order #<span id="order-num">001</span></div>
+      </div>
+      <div class="hdr-time" id="datetime"></div>
+    </div>
+
+    <div class="sec-lbl">ชื่อลูกค้า (ถ้ามี)</div>
+    <input class="input" id="customer" type="text" placeholder="ชื่อ / เบอร์โทร">
+
+    <div class="sec-lbl">สินค้า</div>
+    <div class="prod-list" id="products"></div>
+
+    <div class="sum-bar">
+      <div class="sum-row"><span class="lbl">รายการ</span><span class="val" id="item-count">0 รายการ</span></div>
+      <div class="sum-row"><span class="lbl">จำนวนชิ้น</span><span class="val" id="unit-count">0 ชิ้น</span></div>
+      <div class="total-row">
+        <span class="total-lbl">ยอดรวม</span>
+        <span class="total-val" id="grand-total">฿0</span>
+      </div>
+    </div>
+
+    <div class="sec-lbl">หลักฐานการชำระเงิน</div>
+    <label class="upload-lbl">
+      <input type="file" accept="image/*" id="slip-input" onchange="previewSlip(event)">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      </div>
+      <div class="upload-text" id="upload-text">แตะเพื่อแนบสลิป / ภาพ</div>
+      <img class="slip-preview" id="preview-img" alt="slip">
+    </label>
+
+    <div class="sec-lbl">หมายเหตุ</div>
+    <textarea class="input" id="note" placeholder="ระบุเพิ่มเติม (ไม่บังคับ)"></textarea>
+
+    <button class="btn-main" id="btn-submit" onclick="submitOrder()">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      ยืนยันออเดอร์
+    </button>
+    <div id="sync-status" class="sync-bar" style="display:none">
+      <span class="sync-dot"></span>
+      <span id="sync-msg"></span>
+    </div>
+    <button class="btn-ghost" onclick="clearAll()">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      เคลียร์
+    </button>
+  </div>
+
+  <!-- SUMMARY PAGE -->
+  <div class="page" id="page-summary">
+    <div class="hdr">
+      <div class="hdr-icon" style="background:#edf3ea">
+        <svg viewBox="0 0 24 24" style="stroke:var(--accent)"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </div>
+      <div>
+        <div class="hdr-title">สรุปยอดวันนี้</div>
+        <div class="hdr-sub" id="sum-date"></div>
+      </div>
+      <button class="btn-refresh" style="margin-left:auto" onclick="loadSummary()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        รีเฟรช
+      </button>
+    </div>
+
+    <div id="sum-loading" class="loading-row">กำลังโหลด...</div>
+    <div id="sum-empty" class="empty" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      ยังไม่มีออเดอร์วันนี้
+    </div>
+
+    <div id="summary-content" style="display:none">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-lbl">ยอดขายรวม</div><div class="stat-val accent" id="s-total">฿0</div></div>
+        <div class="stat-card"><div class="stat-lbl">จำนวนออเดอร์</div><div class="stat-val" id="s-orders">0</div></div>
+        <div class="stat-card"><div class="stat-lbl">ชิ้นที่ขายได้</div><div class="stat-val" id="s-units">0</div></div>
+        <div class="stat-card"><div class="stat-lbl">เฉลี่ย/ออเดอร์</div><div class="stat-val" id="s-avg">฿0</div></div>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-hdr-title">ยอดแยกตาม SKU</span></div>
+      <table class="tbl">
+        <thead><tr><th>สินค้า</th><th>ชิ้น</th><th>ยอด</th></tr></thead>
+        <tbody id="sku-rows"></tbody>
+        <tfoot><tr><td>รวม</td><td id="s-tot-units" style="text-align:center">0</td><td id="s-tot-amt" style="text-align:right">฿0</td></tr></tfoot>
+      </table>
+
+      <div class="sec-hdr">
+        <span class="sec-hdr-title">ประวัติออเดอร์</span>
+        <span class="badge" id="ord-badge">0 รายการ</span>
+      </div>
+      <div id="order-history"></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxkNqwfGFzACrhE1__PUpejBuzlT5ywSv_Z8_uC0tkcLChSlUZx0LFNaUw5Lu5TUspTpg/exec";
+
+const PRODUCTS = [
+  {id:'so',name:'SO',price:0},
+  {id:'e1',name:'E1',price:0},
+  {id:'ricely',name:'Ricely',price:0},
+  {id:'ndc',name:'NDC',price:0},
+  {id:'rbd_nga',name:'RBD งาดำ',price:0},
+  {id:'rbd_ori',name:'RBD ออริ',price:0},
+  {id:'pepper',name:'พริกกระเทียม',price:0},
+  {id:'stn',name:'STN',price:0},
+];
+
+let qtys = {};
+let orderNum = 1;
+let localOrders = [];
+PRODUCTS.forEach(p => qtys[p.id] = 0);
+
+function switchTab(tab) {
+  ['pos','summary'].forEach(t => {
+    document.getElementById('page-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab === 'summary') loadSummary();
+}
+
+function renderProducts() {
+  document.getElementById('products').innerHTML = PRODUCTS.map(p => `
+    <div class="prod-row">
+      <div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-price-wrap">
+          <span class="price-prefix">฿</span>
+          <input class="price-input" type="number" min="0" value="${p.price||''}" placeholder="ราคา" onchange="setPrice('${p.id}',this.value)">
+        </div>
+      </div>
+      <div class="qty-wrap">
+        <button class="qty-btn" onclick="changeQty('${p.id}',-1)">−</button>
+        <span class="qty-val" id="qty-${p.id}">0</span>
+        <button class="qty-btn" onclick="changeQty('${p.id}',1)">+</button>
+      </div>
+      <div class="row-amt" id="row-${p.id}">฿0</div>
+    </div>
+  `).join('');
+}
+
+function setPrice(id, val) {
+  PRODUCTS.find(x => x.id===id).price = parseFloat(val)||0;
+  updateTotals();
+}
+
+function changeQty(id, d) {
+  qtys[id] = Math.max(0, qtys[id]+d);
+  document.getElementById('qty-'+id).textContent = qtys[id];
+  updateTotals();
+}
+
+function updateTotals() {
+  let total=0, items=0, units=0;
+  PRODUCTS.forEach(p => {
+    const sub = qtys[p.id]*p.price;
+    document.getElementById('row-'+p.id).textContent = '฿'+sub.toLocaleString('th-TH');
+    if (qtys[p.id]>0) { items++; units+=qtys[p.id]; }
+    total += sub;
+  });
+  document.getElementById('grand-total').textContent = '฿'+total.toLocaleString('th-TH');
+  document.getElementById('item-count').textContent = items+' รายการ';
+  document.getElementById('unit-count').textContent = units+' ชิ้น';
+}
+
+function previewSlip(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const img = document.getElementById('preview-img');
+  img.src = URL.createObjectURL(f);
+  img.style.display = 'block';
+  document.getElementById('upload-text').textContent = f.name;
+}
+
+function setSyncStatus(type, msg) {
+  const bar = document.getElementById('sync-status');
+  bar.className = 'sync-bar '+type;
+  bar.style.display = 'flex';
+  document.getElementById('sync-msg').textContent = msg;
+}
+
+async function submitOrder() {
+  const lines = PRODUCTS.filter(p => qtys[p.id]>0);
+  if (!lines.length) { showToast('⚠️ ยังไม่ได้เลือกสินค้า'); return; }
+  if (!document.getElementById('slip-input').files[0]) { showToast('⚠️ กรุณาแนบสลิปก่อนยืนยัน'); return; }
+
+  const total = lines.reduce((s,p) => s+qtys[p.id]*p.price, 0);
+  const orderId = String(orderNum).padStart(3,'0');
+  const time = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const payload = {
+    orderId,
+    time,
+    customer: document.getElementById('customer').value||'—',
+    items: lines.map(p=>`${p.name}×${qtys[p.id]}`).join(', '),
+    total,
+    note: document.getElementById('note').value||''
+  };
+
+  localOrders.push({...payload, items_arr: lines.map(p=>({id:p.id,name:p.name,qty:qtys[p.id],sub:qtys[p.id]*p.price}))});
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  setSyncStatus('sending', 'กำลังบันทึกลง Google Sheet...');
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    setSyncStatus('ok', '✓ บันทึกลง Google Sheet แล้ว — Order #'+orderId);
+    showToast('✓ Order #'+orderId+' บันทึกแล้ว');
+    orderNum++;
+    document.getElementById('order-num').textContent = String(orderNum).padStart(3,'0');
+    clearAll();
+  } catch(err) {
+    setSyncStatus('err', '⚠️ ไม่สามารถเชื่อมต่อได้ ข้อมูลบันทึกไว้ในเครื่อง');
+    showToast('⚠️ บันทึกเฉพาะในเครื่อง');
+    orderNum++;
+    document.getElementById('order-num').textContent = String(orderNum).padStart(3,'0');
+    clearAll();
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function clearAll() {
+  PRODUCTS.forEach(p => qtys[p.id]=0);
+  document.querySelectorAll('[id^="qty-"]').forEach(el => el.textContent='0');
+  document.querySelectorAll('[id^="row-"]').forEach(el => el.textContent='฿0');
+  ['customer','note'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('slip-input').value='';
+  document.getElementById('preview-img').style.display='none';
+  document.getElementById('upload-text').textContent='แตะเพื่อแนบสลิป / ภาพ';
+  updateTotals();
+}
+
+async function loadSummary() {
+  const d = new Date();
+  document.getElementById('sum-date').textContent = d.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('sum-loading').style.display='block';
+  document.getElementById('sum-empty').style.display='none';
+  document.getElementById('summary-content').style.display='none';
+
+  try {
+    const res = await fetch(SCRIPT_URL+'?action=summary&date='+d.toISOString().split('T')[0]);
+    const json = await res.json();
+    if (json.orders && json.orders.length>0) {
+      renderSummaryData(json.orders);
+    } else {
+      renderLocalSummary();
+    }
+  } catch(e) {
+    renderLocalSummary();
+  }
+  document.getElementById('sum-loading').style.display='none';
+}
+
+function renderLocalSummary() {
+  if (!localOrders.length) {
+    document.getElementById('sum-empty').style.display='block';
+    return;
+  }
+  const orders = localOrders.map(o => ({
+    id: o.orderId, time: o.time, customer: o.customer,
+    items_arr: o.items_arr, total: o.total
+  }));
+  renderSummaryData(orders);
+}
+
+function renderSummaryData(orders) {
+  document.getElementById('summary-content').style.display='block';
+  const grand = orders.reduce((s,o)=>s+(parseFloat(o.total)||0),0);
+  const totalU = orders.reduce((s,o)=>{
+    if (o.items_arr) return s+o.items_arr.reduce((ss,i)=>ss+i.qty,0);
+    if (o.items) return s+o.items.split(', ').reduce((ss,x)=>{const m=x.match(/×(\d+)/);return ss+(m?parseInt(m[1]):0);},0);
+    return s;
+  },0);
+
+  document.getElementById('s-total').textContent = '฿'+grand.toLocaleString('th-TH');
+  document.getElementById('s-orders').textContent = orders.length+' ออเดอร์';
+  document.getElementById('s-units').textContent = totalU+' ชิ้น';
+  document.getElementById('s-avg').textContent = '฿'+Math.round(grand/orders.length).toLocaleString('th-TH');
+
+  const by = {};
+  PRODUCTS.forEach(p => by[p.id]={name:p.name,qty:0,amt:0});
+  orders.forEach(o => {
+    if (o.items_arr) {
+      o.items_arr.forEach(i => { if(by[i.id]){by[i.id].qty+=i.qty;by[i.id].amt+=i.sub;} });
+    }
+  });
+  const rows = PRODUCTS.filter(p=>by[p.id].qty>0).sort((a,b)=>by[b.id].amt-by[a.id].amt);
+  document.getElementById('sku-rows').innerHTML = rows.map(p=>`
+    <tr><td>${by[p.id].name}</td><td style="text-align:center">${by[p.id].qty}</td><td style="text-align:right">฿${by[p.id].amt.toLocaleString('th-TH')}</td></tr>
+  `).join('');
+  document.getElementById('s-tot-units').textContent = totalU;
+  document.getElementById('s-tot-amt').textContent = '฿'+grand.toLocaleString('th-TH');
+  document.getElementById('ord-badge').textContent = orders.length+' รายการ';
+  document.getElementById('order-history').innerHTML = [...orders].reverse().map(o=>`
+    <div class="ord-card">
+      <div class="ord-hdr">
+        <span class="ord-tag">#${o.id||o.orderId}</span>
+        <span class="ord-time">${o.time}${(o.customer&&o.customer!=='—')?' · '+o.customer:''}</span>
+      </div>
+      <div class="ord-items">${o.items_arr ? o.items_arr.map(i=>`${i.name} ×${i.qty}`).join(', ') : o.items}</div>
+      <div class="ord-total">฿${parseFloat(o.total).toLocaleString('th-TH')}</div>
+    </div>
+  `).join('');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0', 2500);
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('datetime').textContent = n.toLocaleDateString('th-TH',{day:'2-digit',month:'short'})+' '+n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+
+renderProducts(); updateTotals(); updateClock();
+setInterval(updateClock, 30000);
+</script>
+</body>
+</html>
