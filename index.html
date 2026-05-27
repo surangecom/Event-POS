@@ -337,6 +337,15 @@ function previewSlip(e) {
   document.getElementById('upload-text').textContent = f.name;
 }
 
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function setSyncStatus(type, msg) {
   const bar = document.getElementById('sync-status');
   bar.className = 'sync-bar '+type;
@@ -363,6 +372,17 @@ async function submitOrder() {
     note: document.getElementById('note').value||'',
     payment: paymentMethod==='cash' ? 'เงินสด' : 'โอนเงิน'
   };
+
+  const slipFile = document.getElementById('slip-input').files[0];
+  if (paymentMethod==='transfer' && slipFile) {
+    try {
+      payload.slipBase64 = await readFileAsBase64(slipFile);
+      payload.slipName = `slip_${orderId}_${Date.now()}.${slipFile.name.split('.').pop()}`;
+      payload.slipType = slipFile.type;
+    } catch(err) {
+      console.error('Error reading slip:', err);
+    }
+  }
 
   localOrders.push({...payload, items_arr: lines.map(p=>({id:p.id,name:p.name,qty:qtys[p.id],sub:qtys[p.id]*p.price}))});
 
