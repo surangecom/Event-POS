@@ -104,6 +104,14 @@ textarea.input{resize:none;min-height:64px}
 .btn-refresh{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);background:var(--accent-bg);border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;font-family:inherit;font-weight:500}
 .btn-refresh svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .loading-row{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+
+/* payment toggle */
+.pay-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.pay-opt{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;background:var(--card);transition:all 0.15s;font-size:14px;font-weight:500;color:var(--text2)}
+.pay-opt.selected{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.pay-opt svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cash-badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#1a5c38;background:#eaf3ec;border:1px solid #b6ddc4;border-radius:var(--radius-sm);padding:10px 14px;margin-top:6px;width:100%}
+.cash-badge svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 </style>
 </head>
 <body>
@@ -147,15 +155,35 @@ textarea.input{resize:none;min-height:64px}
       </div>
     </div>
 
-    <div class="sec-lbl">หลักฐานการชำระเงิน</div>
-    <label class="upload-lbl">
-      <input type="file" accept="image/*" id="slip-input" onchange="previewSlip(event)">
-      <div class="upload-icon">
-        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+    <div class="sec-lbl">วิธีชำระเงิน</div>
+    <div class="pay-toggle">
+      <div class="pay-opt selected" id="pay-transfer" onclick="selectPayment('transfer')">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        โอนเงิน
       </div>
-      <div class="upload-text" id="upload-text">แตะเพื่อแนบสลิป / ภาพ</div>
-      <img class="slip-preview" id="preview-img" alt="slip">
-    </label>
+      <div class="pay-opt" id="pay-cash" onclick="selectPayment('cash')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>
+        เงินสด
+      </div>
+    </div>
+
+    <div id="slip-section" style="margin-top:10px">
+      <label class="upload-lbl">
+        <input type="file" accept="image/*" id="slip-input" onchange="previewSlip(event)">
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        </div>
+        <div class="upload-text" id="upload-text">แตะเพื่อแนบสลิป / ภาพ</div>
+        <img class="slip-preview" id="preview-img" alt="slip">
+      </label>
+    </div>
+
+    <div id="cash-section" style="display:none;margin-top:10px">
+      <div class="cash-badge">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        ชำระด้วยเงินสด — ไม่ต้องแนบสลิป
+      </div>
+    </div>
 
     <div class="sec-lbl">หมายเหตุ</div>
     <textarea class="input" id="note" placeholder="ระบุเพิ่มเติม (ไม่บังคับ)"></textarea>
@@ -238,7 +266,16 @@ const PRODUCTS = [
 let qtys = {};
 let orderNum = 1;
 let localOrders = [];
+let paymentMethod = 'transfer';
 PRODUCTS.forEach(p => qtys[p.id] = 0);
+
+function selectPayment(method) {
+  paymentMethod = method;
+  document.getElementById('pay-transfer').classList.toggle('selected', method==='transfer');
+  document.getElementById('pay-cash').classList.toggle('selected', method==='cash');
+  document.getElementById('slip-section').style.display = method==='transfer' ? 'block' : 'none';
+  document.getElementById('cash-section').style.display = method==='cash' ? 'block' : 'none';
+}
 
 function switchTab(tab) {
   ['pos','summary'].forEach(t => {
@@ -310,7 +347,9 @@ function setSyncStatus(type, msg) {
 async function submitOrder() {
   const lines = PRODUCTS.filter(p => qtys[p.id]>0);
   if (!lines.length) { showToast('⚠️ ยังไม่ได้เลือกสินค้า'); return; }
-  if (!document.getElementById('slip-input').files[0]) { showToast('⚠️ กรุณาแนบสลิปก่อนยืนยัน'); return; }
+  if (paymentMethod==='transfer' && !document.getElementById('slip-input').files[0]) {
+    showToast('⚠️ กรุณาแนบสลิปก่อนยืนยัน'); return;
+  }
 
   const total = lines.reduce((s,p) => s+qtys[p.id]*p.price, 0);
   const orderId = String(orderNum).padStart(3,'0');
@@ -321,7 +360,8 @@ async function submitOrder() {
     customer: document.getElementById('customer').value||'—',
     items: lines.map(p=>`${p.name}×${qtys[p.id]}`).join(', '),
     total,
-    note: document.getElementById('note').value||''
+    note: document.getElementById('note').value||'',
+    payment: paymentMethod==='cash' ? 'เงินสด' : 'โอนเงิน'
   };
 
   localOrders.push({...payload, items_arr: lines.map(p=>({id:p.id,name:p.name,qty:qtys[p.id],sub:qtys[p.id]*p.price}))});
@@ -361,6 +401,7 @@ function clearAll() {
   document.getElementById('slip-input').value='';
   document.getElementById('preview-img').style.display='none';
   document.getElementById('upload-text').textContent='แตะเพื่อแนบสลิป / ภาพ';
+  selectPayment('transfer');
   updateTotals();
 }
 
